@@ -10,50 +10,46 @@ const buffer = fs.readFileSync("./thesis.pdf");
 const parsedPdf = await pdf(buffer);
 
 const serviceContext = serviceContextFromDefaults({
-  chunkSize: 4000,
-  chunkOverlap: 500,
+    chunkSize: 4000,
+    chunkOverlap: 500,
 });
 
 const storageContext = await storageContextFromDefaults({
-  persistDir: "./storage"
-});
+    persistDir: "./storage"
+})
 
-const document = new Document({ text: parsedPdf.text });
+const document = new Document({ text: parsedPdf.text })
 
-console.log("Creating index");
 const index = await VectorStoreIndex.fromDocuments([document], {
-  serviceContext,
-  storageContext,
+    serviceContext,
+    storageContext
 });
-console.log("Index created", index);
 
-const query = "Which technologies can be used to solve congestion at airports?";
+const query = "Quais tecnologias podem ser usadas para resolver o congestionamento nos aeroportos?"
 
-const retriever = index.asRetriever();
+const retriever = index.asRetriever()
 
-const matchingNodes = await retriever.retrieve(query);
+const matchingNodes = await retriever.retrieve(query)
 
-const knowledge = matchingNodes.map(node => {
-  const textNode = node.node as TextNode;
-  return textNode.text;
-}).join("\n\n");
+const knowlodge = matchingNodes.map(node => {
+    const textNode = node.node as TextNode
+    return textNode.text
+}).join("\n")
 
-// Querying OpenAI
-
-const openai = new OpenAI();
+const openai = new OpenAI()
 const response = await openai.chat.completions.create({
-  model: "gpt-3.5-turbo",
-  temperature: 0,
-  messages: [
-    {
-      role: "system",
-      content: `You are an aviation expert. Here is your knowledge to answer the user's question: ${knowledge}`
-    },
-    {
-      role: "user",
-      content: query
-    }
-  ],
-});
+    model: "gpt-3.5-turbo",
+    temperature: 0,
+    messages: [
+        {
+            role: "system",
+            content: `Você é um especialista em aeropostos. Aqui está o que você sabe sobre o congestionamento nos aeroportos: \n${knowlodge}`
+        },
+        {
+            role: "user",
+            content: query
+        }
+    ]
+})
 
-console.log(response.choices[0]);
+console.log(response.choices[0])

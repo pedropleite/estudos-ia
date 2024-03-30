@@ -3,6 +3,7 @@ dotenv.config();
 
 import OpenAI from "openai";
 import { getProductId } from "./lib/get-product-id";
+import { getOpenStores } from "./lib/get-open-hours";
 
 const openai = new OpenAI();
 
@@ -14,6 +15,14 @@ const functions: any = {
     return {
       url: `https://example.com/products/${productId}`
     }
+  },
+  async openStore(obj: { description: string }) {
+    console.log("Open store function called by OpenAI", obj.description);
+    const openStores = await getOpenStores(obj.description);
+
+    return {
+      stores: openStores
+    }
   }
 };
 
@@ -23,11 +32,11 @@ const response = await openai.chat.completions.create({
   messages: [
     {
       role: "system",
-      content: "You are a helpful assistant that recommends products to users.",
+      content: "You are a helpful assistant that recommends products to users and help them to find which store is open.",
     },
     {
       role: "user",
-      content: "I'm a skater. I'm looking for skateboarding shoes.",
+      content: "Which store is open at 8am?",
     }
   ],
   functions: [
@@ -40,6 +49,19 @@ const response = await openai.chat.completions.create({
           description: {
             type: "string",
             description: "A short description of the product the user is looking for, ideally a copy paste from the user's mesage"
+          }
+        }
+      }
+    },
+    {
+      name: "openStore",
+      description: "Take the time and return the stores that are open at that time",
+      parameters: {
+        type: "object",
+        properties: {
+          description: {
+            type: "string",
+            description: "Return the stores that are open at the time the user is asking for, ideally a copy paste from the user's message"
           }
         }
       }
